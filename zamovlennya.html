@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="uk" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оформлення замовлення — Purrfect</title>
+<meta name="description" content="Оформлення замовлення Purrfect: доставка Новою поштою або Укрпоштою, оплата карткою через LiqPay.">
+<meta name="theme-color" content="#04120E">
+<meta name="robots" content="noindex, follow">
+<script>document.documentElement.classList.replace("no-js","js");</script>
+
+<link rel="preload" href="image/bg-marble.jpg" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css?v=53">
+</head>
+<body>
+
+<div class="bg-scene" aria-hidden="true"></div>
+
+<header class="topbar topbar--solid">
+  <a class="logo" href="index.html" aria-label="Purrfect — на головну">Purrfect</a>
+
+  <nav class="nav" aria-label="Основна навігація">
+    <ul class="nav__list">
+      <li><a href="index.html#aromaty">Аромати</a></li>
+      <li><a href="index.html#chomu">Чому Purrfect</a></li>
+      <li><a href="index.html#vidhuky">Відгуки</a></li>
+      <li><a href="dlia-biznesu.html">Для бізнесу</a></li>
+    </ul>
+  </nav>
+
+  <div class="topbar__actions">
+    <button class="cart" type="button" data-cart-open aria-haspopup="dialog" aria-controls="koshyk">
+      Кошик <span class="cart__count" data-cart-count aria-label="товарів у кошику">0</span>
+    </button>
+  </div>
+
+  <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="mobile-nav">
+    <span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-nav" id="mobile-nav" hidden>
+  <nav aria-label="Мобільна навігація">
+    <ul>
+      <li><a href="index.html#aromaty">Аромати</a></li>
+      <li><a href="index.html#chomu">Чому Purrfect</a></li>
+      <li><a href="index.html#vidhuky">Відгуки</a></li>
+      <li><a href="dlia-biznesu.html">Для бізнесу</a></li>
+      <li><a href="index.html">На головну</a></li>
+    </ul>
+  </nav>
+</div>
+
+<main class="page" id="zamovlennya">
+  <div class="wrap">
+
+    <div class="order-head">
+      <p class="page__crumbs"><a href="index.html">Головна</a> · Оформлення замовлення</p>
+      <h1 class="h2 h2--center h2--inline">Оформлення <em>за дві хвилини</em></h1>
+    </div>
+
+    <form class="order" data-order-form novalidate>
+
+      <!-- ---------- Кошик ---------- -->
+      <section class="order__block" aria-labelledby="ttl-cart">
+        <h2 class="order__ttl" id="ttl-cart">Ваше замовлення</h2>
+        <div data-order-cart></div>
+      </section>
+
+      <!-- ---------- Контакти ---------- -->
+      <section class="order__block" aria-labelledby="ttl-contact">
+        <h2 class="order__ttl" id="ttl-contact">Контактні дані</h2>
+        <div class="grid2">
+          <label class="field">
+            <span class="field__label">Прізвище та ім'я <i>*</i></span>
+            <input type="text" name="name" autocomplete="name" required placeholder="Коваленко Ірина">
+            <span class="field__err" data-err></span>
+          </label>
+          <label class="field">
+            <span class="field__label">Телефон <i>*</i></span>
+            <input type="tel" name="phone" autocomplete="tel" required inputmode="tel" placeholder="+380 (__) ___-__-__">
+            <span class="field__err" data-err></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- ---------- Доставка ---------- -->
+      <section class="order__block" aria-labelledby="ttl-ship">
+        <h2 class="order__ttl" id="ttl-ship">Доставка</h2>
+
+        <div class="choices" role="radiogroup" aria-label="Спосіб доставки">
+          <label class="choice">
+            <input type="radio" name="shipping" value="np-warehouse" checked>
+            <span class="choice__box">
+              <b>Нова пошта — відділення / поштомат</b>
+              <i>За тарифами перевізника</i>
+            </span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="shipping" value="np-courier">
+            <span class="choice__box">
+              <b>Нова пошта — кур'єр за адресою</b>
+              <i>За тарифами перевізника</i>
+            </span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="shipping" value="ukrposhta">
+            <span class="choice__box">
+              <b>Укрпошта — відділення</b>
+              <i>За тарифами перевізника <span>·</span> дешевше на віддалені адреси</i>
+            </span>
+          </label>
+        </div>
+
+        <!-- Нова пошта -->
+        <div class="ship-fields" data-ship="np-warehouse np-courier">
+          <div class="grid2">
+            <div class="field field--combo field--wide">
+              <span class="field__label">Місто / населений пункт <i>*</i></span>
+              <input type="text" name="npCity" autocomplete="off" role="combobox" aria-expanded="false"
+                     aria-autocomplete="list" aria-controls="np-city-list" placeholder="Почніть вводити назву — оберіть зі списку">
+              <ul class="combo" id="np-city-list" data-np-city-list hidden role="listbox"></ul>
+              <span class="field__hint">Оберіть пункт зі списку, щоб адреса була точною.</span>
+              <span class="field__err" data-err></span>
+            </div>
+
+            <div class="field field--combo field--wide" data-ship="np-warehouse">
+              <span class="field__label">Відділення / поштомат <i>*</i></span>
+
+              <!-- Значення, яке піде в замовлення. Заповнюється вибором зі списку. -->
+              <input type="hidden" name="npWarehouse">
+
+              <input type="text" data-wh-search autocomplete="off" role="combobox" aria-expanded="false"
+                     aria-autocomplete="list" aria-controls="np-wh-list"
+                     aria-label="Відділення або поштомат" placeholder="Спочатку оберіть місто" disabled>
+              <ul class="combo" id="np-wh-list" data-np-wh-list hidden role="listbox"></ul>
+
+              <span class="field__hint" data-wh-hint></span>
+              <span class="field__err" data-err></span>
+            </div>
+
+            <!-- Вулиця окремо від будинку: довідник Нової Пошти знає вулиці,
+                 але не номери будинків, тож підказки має сенс вішати лише на
+                 вулицю, а будинок людина вписує сама. -->
+            <div class="field field--combo field--wide" data-ship="np-courier">
+              <span class="field__label">Вулиця <i>*</i></span>
+              <input type="text" name="npStreet" autocomplete="address-line1" role="combobox" aria-expanded="false"
+                     aria-autocomplete="list" aria-controls="np-street-list"
+                     placeholder="Спочатку оберіть місто" disabled>
+              <ul class="combo" id="np-street-list" data-np-street-list hidden role="listbox"></ul>
+              <span class="field__hint" data-street-hint></span>
+              <span class="field__err" data-err></span>
+            </div>
+
+            <label class="field" data-ship="np-courier">
+              <span class="field__label">Будинок <i>*</i></span>
+              <input type="text" name="npHouse" autocomplete="off" maxlength="12" placeholder="12">
+              <span class="field__err" data-err></span>
+            </label>
+
+            <label class="field" data-ship="np-courier">
+              <span class="field__label">Квартира <i class="opt">— необов'язково</i></span>
+              <input type="text" name="npFlat" autocomplete="address-line2" inputmode="numeric"
+                     maxlength="10" placeholder="45">
+            </label>
+          </div>
+        </div>
+
+        <!-- Укрпошта -->
+        <div class="ship-fields" data-ship="ukrposhta">
+          <div class="grid2">
+            <div class="field field--combo">
+              <span class="field__label">Місто / село <i>*</i></span>
+              <input type="text" name="upCity" autocomplete="off" role="combobox" aria-expanded="false"
+                     aria-autocomplete="list" aria-controls="up-city-list" placeholder="Почніть вводити назву">
+              <ul class="combo" id="up-city-list" data-up-city-list hidden role="listbox"></ul>
+              <span class="field__hint" data-up-city-hint>Оберіть пункт зі списку — індекс і вулиці підставляться самі.</span>
+              <span class="field__err" data-err></span>
+            </div>
+
+            <!-- Індекс підставляється сам, щойно обрано населений пункт:
+                 у селах і містечках він один на весь пункт. У великих
+                 містах індексів багато, тож там показуємо діапазон. -->
+            <div class="field field--combo">
+              <span class="field__label">Індекс відділення <i>*</i></span>
+              <input type="text" name="upIndex" autocomplete="postal-code" inputmode="numeric" maxlength="5"
+                     role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="up-index-list"
+                     placeholder="07333">
+              <ul class="combo" id="up-index-list" data-up-index-list hidden role="listbox"></ul>
+              <span class="field__hint" data-up-index-hint>П'ять цифр. Можна знайти на ukrposhta.ua.</span>
+              <span class="field__err" data-err></span>
+            </div>
+
+            <div class="field field--combo field--wide">
+              <span class="field__label">Адреса відділення або вулиця</span>
+              <input type="text" name="upAddress" autocomplete="address-line1" role="combobox" aria-expanded="false"
+                     aria-autocomplete="list" aria-controls="up-street-list"
+                     placeholder="вул. Броварська, 4">
+              <ul class="combo" id="up-street-list" data-up-street-list hidden role="listbox"></ul>
+              <span class="field__hint" data-up-street-hint></span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ---------- Оплата ---------- -->
+      <section class="order__block" aria-labelledby="ttl-pay">
+        <h2 class="order__ttl" id="ttl-pay">Оплата</h2>
+
+        <!-- Єдиний спосіб оплати, тож це не вибір, а пояснення -->
+        <input type="hidden" name="payment" value="liqpay">
+
+        <div class="pay">
+          <p class="pay__ttl">Карткою онлайн <em class="tag">LiqPay</em></p>
+          <p class="pay__note">
+            Вікно оплати відкриється просто тут, під кнопкою: номер картки,
+            термін дії та CVV вводяться вручну, з клавіатури.
+          </p>
+          <p class="pay__note">
+            Visa, Mastercard <span>·</span> захищено 3-D&nbsp;Secure
+            <span>·</span> Apple&nbsp;Pay та Google&nbsp;Pay — за бажанням, окремою вкладкою
+          </p>
+        </div>
+      </section>
+
+      <!-- ---------- Підсумок ---------- -->
+      <section class="order__block order__block--final" aria-labelledby="ttl-final">
+        <h2 class="order__ttl" id="ttl-final">Підтвердження</h2>
+
+        <label class="field field--wide">
+          <span class="field__label">Коментар до замовлення <i class="opt">— необов'язково</i></span>
+          <textarea name="comment" rows="2" placeholder="Подарункове пакування, зручний час дзвінка"></textarea>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" name="agree" required>
+          <span>Погоджуюся з <a href="oferta.html">договором публічної оферти</a> та
+          <a href="polityka-konfidentsiynosti.html">політикою конфіденційності</a> <i>*</i></span>
+        </label>
+        <span class="field__err" data-err-agree></span>
+
+        <div class="total" data-order-total></div>
+
+        <button class="btn btn--full" type="submit" data-submit>
+          <span data-submit-label>Перейти до оплати</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+            <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <p class="order__status" data-order-status role="status" aria-live="polite"></p>
+
+        <!-- Вікно оплати LiqPay розкривається тут, після створення замовлення:
+             покупець вводить картку вручну, не виходячи зі сторінки. Самі поля
+             картки живуть в iframe LiqPay — на наш сайт і на наш сервер вони не
+             потрапляють (інакше знадобилася б сертифікація PCI DSS). -->
+        <div class="pay-embed" data-pay-embed hidden>
+          <p class="pay-embed__ttl">Дані картки</p>
+          <div class="pay-embed__box" id="liqpay-embed" data-liqpay-embed></div>
+          <p class="pay-embed__note">
+            Номер картки, термін дії та CVV вводяться у захищеному вікні LiqPay.
+            Ми цих даних не бачимо й не зберігаємо.
+          </p>
+          <button class="btn btn--ghost btn--sm pay-embed__back" type="button" data-pay-embed-back>
+            <span>Повернутися до даних замовлення</span>
+          </button>
+        </div>
+
+        <p class="order__fine">
+          Натискаючи кнопку, ви підтверджуєте замовлення. Одразу під нею
+          відкриється захищене вікно LiqPay, у якому дані картки вводяться
+          вручну — ми їх не бачимо й не зберігаємо. Вартість доставки
+          сплачується окремо за тарифами перевізника.
+        </p>
+      </section>
+
+    </form>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom">
+      <p class="footer__legal">© <span data-year>2026</span> Purrfect. Усі права захищені.</p>
+      <p class="footer__pay">
+        <a href="dostavka.html">Доставка</a> ·
+        <a href="oferta.html">Оферта</a> ·
+        <a href="obmin-ta-povernennia.html">Повернення</a> ·
+        <a href="kontakty.html">Контакти</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<!-- КОШИК (drawer) -->
+<div class="drawer" id="koshyk" role="dialog" aria-modal="true" aria-label="Кошик" hidden>
+  <div class="drawer__scrim" data-cart-close></div>
+  <aside class="drawer__panel">
+    <header class="drawer__head">
+      <p class="drawer__ttl">Кошик</p>
+      <button class="drawer__close" type="button" data-cart-close aria-label="Закрити кошик">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+    <div class="drawer__body" data-cart-body></div>
+    <footer class="drawer__foot" data-cart-foot></footer>
+  </aside>
+</div>
+
+<script src="script.js?v=53" defer></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Справжні ключі — ніколи в репозиторій.
+# У проєкті лишається тільки зразок .env.example без значень.
+.env
+.env.*
+!.env.example
+
+# Службове
+node_modules/
+.netlify/
+*.bak
+*.log
+
+# Сміття операційної системи та OneDrive
+Thumbs.db
+desktop.ini
+.DS_Store
