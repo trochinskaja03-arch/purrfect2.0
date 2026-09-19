@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=53">
+<link rel="stylesheet" href="styles.css?v=56">
 </head>
 <body>
 
@@ -32,6 +32,19 @@
   </nav>
 
   <div class="topbar__actions">
+    <!-- Перемикач мови. Українська — основна: вона лежить прямо в розмітці,
+         російська підставляється словником i18n.js. Кнопка стоїть у
+         topbar__actions, а не серед соцмереж, бо ті ховаються на телефоні. -->
+    <button class="iconlink iconlink--lang" type="button" data-lang-toggle
+            aria-label="Змінити мову" title="Русский">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M3.6 12h16.8" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M12 3.6c2.5 2.7 2.5 14.1 0 16.8M12 3.6c-2.5 2.7-2.5 14.1 0 16.8"
+              stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <span class="iconlink__lang" data-lang-code>UA</span>
+    </button>
     <button class="cart" type="button" data-cart-open aria-haspopup="dialog" aria-controls="koshyk">
       Кошик <span class="cart__count" data-cart-count aria-label="товарів у кошику">0</span>
     </button>
@@ -313,6 +326,7 @@
   </aside>
 </div>
 
-<script src="script.js?v=53" defer></script>
+<script src="script.js?v=56" defer></script>
+<script src="i18n.js?v=56" defer></script>
 </body>
 </html>

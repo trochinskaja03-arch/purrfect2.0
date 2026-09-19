@@ -328,6 +328,31 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   background: rgba(200, 162, 74, .08);
 }
 
+/* Перемикач мови: та сама кругла планетка, що й іконки соцмереж, плюс
+   код поточної мови. Код потрібен, бо сама по собі планетка не каже,
+   якою мовою сторінка зараз. */
+.iconlink--lang {
+  gap: 5px;
+  width: auto;
+  padding: 0 11px 0 9px;
+  border-radius: 999px;
+  border-color: var(--hairline-2);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.iconlink--lang svg { flex: 0 0 auto; }
+.iconlink__lang {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  font-variant-numeric: tabular-nums;
+}
+.iconlink--lang:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .cart {
   display: inline-flex;
   align-items: center;
