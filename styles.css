@@ -751,19 +751,44 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
    флакони ставали в один ряд. */
 .section--aromaty .wrap { max-width: 1560px; }
 
+/* Каталог — завжди один рядок, який гортається вбік.
+   Раніше тут стояв flex-wrap: wrap, і п'ята картка переносилась на
+   другий рядок на всіх екранах, вужчих за ~1250 px. Саме туди
+   потрапляє iPad у горизонтальному положенні (1194 px) — картка
+   «випадала» з ряду й розтягувалась на всю ширину. Один рядок для
+   всіх ширин прибирає цей проміжок: там, де п'ять карток вміщуються,
+   вони просто стоять поруч, де ні — стрічка гортається. */
 .products {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
+  /* flex-start — запасний для браузерів без `safe`. Саме в такому
+     порядку: звичайний `center` у контейнері з прокруткою робить
+     перші картки недосяжними, `safe center` — ні. */
+  justify-content: flex-start;
+  justify-content: safe center;
   gap: clamp(16px, 1.8vw, 26px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  /* Без бічних полів: вони потрібні лише там, де стрічка справді
+     гортається (див. медіазапит нижче). На широкому екрані ці поля
+     з'їдали місце й змушували стрічку прокручуватись навіть тоді,
+     коли всі п'ять карток вміщувалися. */
+  padding-bottom: var(--space-3);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 162, 74, .45) transparent;
 }
+.products::-webkit-scrollbar { height: 4px; }
+.products::-webkit-scrollbar-track { background: var(--hairline-2); border-radius: 2px; }
+.products::-webkit-scrollbar-thumb { background: rgba(200, 162, 74, .45); border-radius: 2px; }
 
-/* Базис підібраний так, щоб на екранах від ~1400 px усі п'ять карток
-   ставали в один ряд. Вужче — ряд переноситься, і завдяки
-   justify-content: center неповний ряд лишається по центру. */
+/* Ширина підібрана так, щоб усі п'ять карток вміщувалися в ряд на
+   екранах від ~1400 px і не ставали завузькими на менших. */
 .product {
-  flex: 1 1 220px;
-  max-width: 320px;
+  flex: 0 0 clamp(228px, 15.9vw, 258px);
+  max-width: none;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--hairline-2);
@@ -1097,6 +1122,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   /* proximity, а не mandatory: mandatory у частині браузерів бореться
      з плавним скролом від кнопок і відкидає стрічку назад */
   scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
   /* Дійшовши до краю стрічки, палець не «перекидає» прокрутку на всю
      сторінку — без цього вертикальний свайп, що почався з картки,
      смикав сторінку вбік і вниз одночасно. */
@@ -2612,28 +2638,16 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
      одною змушували гортати сторінку вниз через увесь ряд; замість
      цього картки йдуть в один рядок і гортаються вбік, як стрічка
      відгуків, — наступна картка визирає з краю. */
+  /* Стрічка вже описана в базових правилах — тут лишається ширина
+     картки й бічні поля. Картка майже на весь екран, щоб сусідня
+     визирала з краю й було видно, що ряд гортається; поля дають
+     карткам доходити до самого краю екрана. */
+  .product { flex: 0 0 clamp(240px, 78vw, 320px); }
   .products {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
     margin-inline: calc(-1 * var(--gutter));
-    padding: 0 var(--gutter) var(--space-3);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(200, 162, 74, .45) transparent;
-  }
-  .products::-webkit-scrollbar { height: 4px; }
-  .products::-webkit-scrollbar-thumb { background: rgba(200, 162, 74, .45); border-radius: 2px; }
-  .product {
-    flex: 0 0 clamp(240px, 78vw, 320px);
-    max-width: none;
-    scroll-snap-align: start;
+    padding-inline: var(--gutter);
   }
   .product:hover { transform: none; }   /* наведення мишею тут ні до чого — це дотик */
-
-  /* Те саме, що й для стрічки відгуків: край стрічки не віддає
-     прокрутку сторінці. */
-  .products { overscroll-behavior-x: contain; }
 }
 
 /* ============================================================
