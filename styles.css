@@ -107,7 +107,12 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* clip, а не hidden: hidden робить body власним контейнером
+     прокрутки, і на iOS через це зсувається позиція сторінки.
+     Перший рядок — запасний для Safari до 16-ї версії, яка ще
+     не знає `clip` і просто його проігнорує. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 img { display: block; max-width: 100%; }
@@ -157,15 +162,29 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
    сайт. Фото дуже повільно наближається й пливе, зверху мандрує
    м'який відблиск. Секції поверх — напівпрозорі.
    ============================================================ */
+/* Висота — з --app-vh, а не з відсотків вікна. На iPhone та iPad
+   висота вікна стрибає щоразу, коли Safari ховає свою панель, і
+   фон разом із нею смикався й «плив» відносно тексту. --app-vh
+   ставить script.js один раз і міняє лише при повороті екрана. */
 .bg-scene {
   position: fixed;
-  inset: -4%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Не менше за найбільшу можливу висоту вікна (100lvh): коли Safari
+     ховає панель, видима зона стає вищою за зафіксовану, і знизу
+     з'явився б просвіт. Перший рядок — запасний для браузерів,
+     які ще не знають lvh. */
+  height: 100vh;
+  height: max(var(--app-vh, 0px), 100lvh);
   /* Саме -1, а не 0. При z-index: 0 цей шар потрапляє в той самий крок
      малювання, що й позиціоновані елементи, і перекриває звичайні блоки
      без position — підвал ставав невидимим. */
   z-index: -1;
   pointer-events: none;
   background: var(--ink-2) url("image/bg-marble.jpg") center / cover no-repeat;
+  /* запас по краях замість колишнього inset: -4% */
+  transform: scale(1.06);
   animation: sceneDrift 90s ease-in-out infinite alternate;
   will-change: transform;
 }
@@ -188,8 +207,8 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   will-change: transform, opacity;
 }
 @keyframes sceneDrift {
-  0%   { transform: scale(1) translate3d(0, 0, 0); }
-  100% { transform: scale(1.07) translate3d(-1.5%, 1%, 0); }
+  0%   { transform: scale(1.06) translate3d(0, 0, 0); }
+  100% { transform: scale(1.13) translate3d(-1.5%, 1%, 0); }
 }
 @keyframes sceneGlow {
   0%   { transform: translate3d(0, 0, 0); opacity: .5; }
@@ -383,9 +402,11 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
 /* ============================================================
    2. Перший екран
    ============================================================ */
+/* Так само зі сталої висоти: інакше кожне згортання панелі Safari
+   міняло висоту першого екрана, і фото помітно «наїжджало». */
 .hero {
   position: relative;
-  min-height: 100svh;
+  min-height: var(--app-vh, 100svh);
   display: flex;
   overflow: hidden;
   background: var(--ink-2);
@@ -1076,7 +1097,6 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   /* proximity, а не mandatory: mandatory у частині браузерів бореться
      з плавним скролом від кнопок і відкидає стрічку назад */
   scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
   /* Дійшовши до краю стрічки, палець не «перекидає» прокрутку на всю
      сторінку — без цього вертикальний свайп, що почався з картки,
      смикав сторінку вбік і вниз одночасно. */
@@ -2597,7 +2617,6 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
     justify-content: flex-start;
     overflow-x: auto;
     scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
     margin-inline: calc(-1 * var(--gutter));
     padding: 0 var(--gutter) var(--space-3);
     scrollbar-width: thin;
@@ -2886,4 +2905,55 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   .footer__brand { text-align: center; }
   .footer__brand .socials { justify-content: center; }
   .footer__grid { gap: var(--space-4) var(--space-3); }
+}
+
+/* ============================================================
+   Сенсорні пристрої: iPhone, iPad, Android
+   ============================================================
+   Медіазапити за шириною не ловлять iPad у горизонтальному
+   положенні — він ширший за 1100px і отримував повне «десктопне»
+   оформлення: анімований фон на весь екран і розмиття під шапкою.
+   На iOS саме вони давали смуги під меню, «плавання» фону
+   й ривки під час прокрутки.
+
+   (hover: none) — це будь-який пристрій без миші, незалежно від
+   ширини. Саме те, що тут потрібно.
+   ============================================================ */
+@media (hover: none) {
+  /* Фон нерухомий. Анімація на весь екран — найдорожче, що є на
+     сторінці, і саме вона створювала ефект «фон пливе». */
+  .bg-scene,
+  .bg-scene::after {
+    animation: none;
+    will-change: auto;
+  }
+
+  /* Розмиття тла перераховується на кожному кадрі прокрутки.
+     На iOS воно ще й малює видимі смуги на межі шапки. */
+  .topbar.is-stuck,
+  .topbar--solid,
+  .sticky-buy,
+  .mobile-nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .topbar.is-stuck { background: linear-gradient(to bottom, rgba(2, 12, 9, .82), rgba(2, 12, 9, .62)); }
+  .topbar--solid   { background: rgba(2, 12, 9, .95); }
+  .sticky-buy      { background: rgba(2, 12, 9, .97); }
+  .mobile-nav      { background: rgba(2, 12, 9, .985); }
+
+  /* Подвійне торкання більше не збільшує сторінку. Звичайне
+     масштабування двома пальцями лишається — його прибирати не можна,
+     це потрібно людям зі слабким зором. */
+  a, button, summary, label,
+  input, select, textarea,
+  .product, .review, .faq__q {
+    touch-action: manipulation;
+  }
+}
+
+/* Гумове відтягування сторінки за край відкривало нерухомий фон
+   і виглядало як зсув усього макета. */
+html {
+  overscroll-behavior-y: none;
 }
