@@ -101,7 +101,7 @@ function liqpayPacket({ orderId, amount, description, siteUrl }) {
     // Блок оформлення живе в стрічці лендингу, тож повертаємо покупця туди:
     // там і форма, і місце під повідомлення про статус оплати.
     result_url: `${siteUrl}/?payment=done#zamovlennya`,
-    server_url: `${siteUrl}/.netlify/functions/liqpay-callback`
+    server_url: `${siteUrl}/api/liqpay-callback`
   };
   if (process.env.LIQPAY_SANDBOX === '1') params.sandbox = '1';
 

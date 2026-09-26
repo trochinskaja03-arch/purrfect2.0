@@ -79,8 +79,10 @@
   --z-scrim: 1;
   --z-content: 2;
   --z-sticky: 30;
+  /* Мобільне меню — під шапкою: інакше воно накриває бургер,
+     і на телефоні меню вже нічим не закрити. */
+  --z-mobilenav: 35;
   --z-header: 40;
-  --z-mobilenav: 50;
   --z-drawer: 60;
 }
 
@@ -768,6 +770,10 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   justify-content: safe center;
   gap: clamp(16px, 1.8vw, 26px);
   overflow-x: auto;
+  /* Лише вбік. Без явного hidden браузер ставить і вертикалі auto,
+     а картки на кілька пікселів вищі за стрічку — на телефоні її
+     можна було тягати пальцем у будь-який бік, навіть вгору й вниз. */
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scroll-behavior: smooth;
@@ -782,6 +788,11 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
 .products::-webkit-scrollbar { height: 4px; }
 .products::-webkit-scrollbar-track { background: var(--hairline-2); border-radius: 2px; }
 .products::-webkit-scrollbar-thumb { background: rgba(200, 162, 74, .45); border-radius: 2px; }
+
+/* Уся плитка відкриває картку аромату (script.js, initModal),
+   блок покупки — лише кошик. */
+.product { cursor: pointer; }
+.product__buy { cursor: default; }
 
 /* Ширина підібрана так, щоб усі п'ять карток вміщувалися в ряд на
    екранах від ~1400 px і не ставали завузькими на менших. */
@@ -1119,6 +1130,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   display: flex;
   gap: clamp(16px, 1.8vw, 26px);
   overflow-x: auto;
+  overflow-y: hidden;   /* лише вбік — як у каталогу */
   /* proximity, а не mandatory: mandatory у частині браузерів бореться
      з плавним скролом від кнопок і відкидає стрічку назад */
   scroll-snap-type: x proximity;
@@ -2606,6 +2618,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
     border: 0;
     background: none;
     cursor: pointer;
+    flex: 0 0 auto;   /* не даємо шапці стиснути кнопку до «двох крапок» */
   }
   .burger span {
     display: block;
@@ -2646,7 +2659,15 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   .products {
     margin-inline: calc(-1 * var(--gutter));
     padding-inline: var(--gutter);
+    /* Один свайп — рівно одна картка: стрічка не зупиняється
+       посередині, а доводить наступну картку до лівого поля.
+       scroll-padding — те саме поле, щоб картка ставала рівно
+       по краю тексту, а не впритул до краю екрана. */
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
   }
+  /* always — навіть сильний змах не проскакує кілька карток одразу */
+  .product { scroll-snap-stop: always; }
   .product:hover { transform: none; }   /* наведення мишею тут ні до чого — це дотик */
 }
 
@@ -2916,9 +2937,20 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
 /* Найвужчі екрани: два стовпчики лишаються, але логотип і підпис
    під ним центруються разом із кнопками — так блок не «падає» вліво. */
 @media (max-width: 420px) {
+  /* Шапка: логотип, мова, кошик і меню мають влізти в один рядок
+     навіть на 320px, тому стискаємо відступи, а не саму кнопку меню. */
+  .topbar { gap: 8px; }
+  .topbar__actions { gap: 8px; }
+  .burger { width: 36px; padding: 0 8px; margin-right: -8px; }
+  .cart { padding: 0 12px; }
+
   .footer__brand { text-align: center; }
   .footer__brand .socials { justify-content: center; }
   .footer__grid { gap: var(--space-4) var(--space-3); }
+}
+
+@media (max-width: 359px) {
+  .iconlink--lang svg { display: none; }
 }
 
 /* ============================================================

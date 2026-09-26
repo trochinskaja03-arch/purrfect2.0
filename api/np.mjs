@@ -2,7 +2,7 @@
    Ключ живе лише тут, у змінній середовища NOVAPOSHTA_API_KEY,
    і ніколи не потрапляє у браузер.
 
-   POST /.netlify/functions/np
+   POST /api/np
      { "type": "settlements", "q": "Київ" }
      { "type": "warehouses",  "ref": "<cityRef>" }
      { "type": "ping" }                            — перевірка доступності

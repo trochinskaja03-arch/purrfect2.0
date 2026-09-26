@@ -17,7 +17,7 @@
      блок. Фото карток лежать в image/.
 
      ВАЖЛИВО: ціну й знижку продубльовано на сервері, у файлі
-     netlify/functions/_catalog.mjs. Сервер перераховує суму
+     api/_catalog.mjs. Сервер перераховує суму
      самостійно й ігнорує те, що прислав браузер, тож правити
      треба обидва файли разом — інакше покупець побачить одну
      суму, а до оплати піде інша.
@@ -98,7 +98,7 @@
   const BUNDLE_PRICE = BUNDLE_SUB -
     Math.round(BUNDLE_SUB * (TIERS.find((t) => PRODUCTS.length >= t.min)?.rate || 0));
 
-  const API = '/.netlify/functions';
+  const API = '/api';
 
   /* Куди веде кнопка «Оформити замовлення». Якщо форма є на цій самій
      сторінці (лендинг, сторінка оформлення) — прокручуємо до неї,
@@ -210,16 +210,30 @@
        стежимо за висотою як завжди. */
     const coarse = window.matchMedia('(hover: none)').matches;
     let lastW = -1;
+    let ready = false;
 
     const apply = () => {
       const w = window.innerWidth;
-      if (coarse && w === lastW) return;
+      const h = window.innerHeight;
+      /* Нуль — не розмір. Так буває у фоновій вкладці, під час
+         попереднього рендеру та у вбудованих браузерах месенджерів,
+         де скрипт встигає виконатись до того, як вікно отримає
+         розміри. Записати цей нуль означало б скласти фон і перший
+         екран у смужку; краще лишити запасне значення з CSS. */
+      if (!h) return;
+      if (ready && coarse && w === lastW) return;
       lastW = w;
-      root.style.setProperty('--app-vh', `${window.innerHeight}px`);
+      ready = true;
+      root.style.setProperty('--app-vh', `${h}px`);
     };
 
     apply();
     window.addEventListener('resize', apply, { passive: true });
+    /* Якщо при старті розмірів ще не було — беремо їх, щойно сторінку
+       справді показали. Після вдалого заміру сюди більше не вертаємось,
+       щоб повернення на вкладку не змінювало макет. */
+    document.addEventListener('visibilitychange', () => { if (!ready) apply(); });
+    window.addEventListener('pageshow', () => { if (!ready) apply(); });
     // поворот екрана: розміри доїжджають не миттєво
     window.addEventListener('orientationchange', () => {
       lastW = -1;
@@ -297,7 +311,10 @@
     };
 
     burger.addEventListener('click', () => setOpen(burger.getAttribute('aria-expanded') !== 'true'));
-    menu.addEventListener('click', (e) => { if (e.target.closest('a')) setOpen(false); });
+    // Закриваємо і по пункту меню, і по торканню порожнього місця навколо.
+    menu.addEventListener('click', (e) => {
+      if (e.target.closest('a') || !e.target.closest('nav')) setOpen(false);
+    });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !menu.hidden) setOpen(false);
     });
@@ -706,7 +723,15 @@
 
     document.addEventListener('click', (e) => {
       const more = e.target.closest('[data-more]');
-      if (more) { e.preventDefault(); open(more.dataset.more); }
+      if (more) { e.preventDefault(); open(more.dataset.more); return; }
+
+      /* Уся плитка каталогу відкриває картку аромату — крім блока
+         покупки: «Додати до кошика» й ± лише змінюють кошик.
+         isConnected: кнопку «Додати» renderCart щойно замінив на
+         лічильник, тож відірваний від сторінки target — теж покупка. */
+      const card = e.target.closest('[data-products] .product');
+      if (!card || !e.target.isConnected || e.target.closest('.product__buy')) return;
+      open(card.dataset.id);
     });
 
     modal.addEventListener('click', (e) => {
