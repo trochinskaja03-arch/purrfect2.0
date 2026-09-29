@@ -123,7 +123,7 @@
             <input type="radio" name="shipping" value="ukrposhta">
             <span class="choice__box">
               <b>Укрпошта — відділення</b>
-              <i>За тарифами перевізника <span>·</span> дешевше на віддалені адреси</i>
+              <i>За тарифами перевізника</i>
             </span>
           </label>
         </div>
@@ -136,7 +136,7 @@
               <input type="text" name="npCity" autocomplete="off" role="combobox" aria-expanded="false"
                      aria-autocomplete="list" aria-controls="np-city-list" placeholder="Почніть вводити назву — оберіть зі списку">
               <ul class="combo" id="np-city-list" data-np-city-list hidden role="listbox"></ul>
-              <span class="field__hint">Оберіть пункт зі списку, щоб адреса була точною.</span>
+              <span class="field__hint">Оберіть пункт зі списку, щоб адреса була точною</span>
               <span class="field__err" data-err></span>
             </div>
 
@@ -246,7 +246,7 @@
 
         <label class="field field--wide">
           <span class="field__label">Коментар до замовлення <i class="opt">— необов'язково</i></span>
-          <textarea name="comment" rows="2" placeholder="Подарункове пакування, зручний час дзвінка"></textarea>
+          <textarea name="comment" rows="2"></textarea>
         </label>
 
         <label class="check">
@@ -300,7 +300,7 @@
     <div class="footer__bottom">
       <p class="footer__legal">© <span data-year>2026</span> Purrfect. Усі права захищені.</p>
       <p class="footer__pay">
-        <a href="dostavka.html">Доставка</a> ·
+        <a href="dostavka.html">Доставка та оплата</a> ·
         <a href="oferta.html">Оферта</a> ·
         <a href="obmin-ta-povernennia.html">Повернення</a> ·
         <a href="kontakty.html">Контакти</a>
@@ -315,11 +315,14 @@
   <aside class="drawer__panel">
     <header class="drawer__head">
       <p class="drawer__ttl">Кошик</p>
-      <button class="drawer__close" type="button" data-cart-close aria-label="Закрити кошик">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="drawer__head-actions">
+        <button class="drawer__clear" type="button" data-cart-clear hidden>Очистити</button>
+        <button class="drawer__close" type="button" data-cart-close aria-label="Закрити кошик">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </header>
     <div class="drawer__body" data-cart-body></div>
     <footer class="drawer__foot" data-cart-foot></footer>

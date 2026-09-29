@@ -94,9 +94,9 @@
 
   /* Ціна набору рахується з тих самих констант, а не вписана руками —
      інакше після зміни ціни банер і картка показували б старі цифри. */
+  const BUNDLE_RATE = TIERS.find((t) => PRODUCTS.length >= t.min)?.rate || 0;
   const BUNDLE_SUB = PRODUCTS.length * PRICE;
-  const BUNDLE_PRICE = BUNDLE_SUB -
-    Math.round(BUNDLE_SUB * (TIERS.find((t) => PRODUCTS.length >= t.min)?.rate || 0));
+  const BUNDLE_PRICE = BUNDLE_SUB - Math.round(BUNDLE_SUB * BUNDLE_RATE);
 
   const API = '/api';
 
@@ -343,12 +343,26 @@
 
   const cartCount = () => Object.values(cart).reduce((a, b) => a + b, 0);
 
+  /* Знижка діє за ПОВНІ набори — по одному флакону кожного з п'яти
+     ароматів, а не за будь-які п'ять флаконів. Кількість повних наборів —
+     це мінімум серед кількостей усіх п'яти ароматів: якщо взяти по 2 усіх,
+     крім одного, де лише 1, — це один набір, а не два. Усе понад цей
+     мінімум — вже не набір, а окремі флакони за повною ціною. Рахується
+     однаково, чи набір зібрано карточками поштучно, чи натиснуто «Додати
+     набір»: обидва шляхи однаково піднімають мінімум по всіх ароматах. */
+  const setCount = () => Math.min(...PRODUCTS.map((p) => cart[p.id] || 0));
+
+  const bundleSum = (n) => {
+    const s = n * BUNDLE_SUB;
+    return s - Math.round(s * BUNDLE_RATE);
+  };
+
   const totals = () => {
     const qty = cartCount();
     const sub = qty * PRICE;
-    const tier = TIERS.find((t) => qty >= t.min);
-    const rate = tier ? tier.rate : 0;
-    const discount = Math.round(sub * rate);
+    const n = setCount();
+    const discount = n > 0 ? Math.round(n * BUNDLE_SUB * BUNDLE_RATE) : 0;
+    const rate = n > 0 ? BUNDLE_RATE : 0;
     return { qty, sub, rate, discount, grand: sub - discount };
   };
 
@@ -395,22 +409,18 @@
     bump();
   };
 
-  const modalOpen = () => {
-    const m = $('#product-modal');
-    return !!m && !m.hidden;
-  };
-
-  /* Набір: по одному флакону кожного аромату. Знижка −10% вмикається
-     сама, щойно в кошику набирається п'ять флаконів.
-
-     Шухляду відкриваємо, лише якщо не розкрита картка аромату: два
-     шари поверх одного відчуваються як збій, а не як підтвердження. */
+  /* Набір: по одному флакону кожного аромату. Якщо натиснуто з картки
+     аромату — спершу закриваємо її (через її ж кнопку «×», щоб усе
+     прибралось як слід), а тоді відкриваємо кошик: два шари поверх
+     одного відчуваються як збій, а не як підтвердження. Клік по вже
+     закритій картці — безпечний no-op. */
   const addBundle = () => {
     PRODUCTS.forEach((p) => { cart[p.id] = Math.min(99, (cart[p.id] || 0) + 1); });
     saveCart();
     renderCart();
     bump();
-    if (!modalOpen()) openDrawer();
+    $('#product-modal [data-modal-close]')?.click();
+    openDrawer();
   };
 
   const setQty = (id, n) => {
@@ -418,6 +428,66 @@
     saveCart();
     renderCart();
   };
+
+  /* Очистити весь кошик одразу, а не по одній позиції ± до нуля. */
+  const clearCart = () => {
+    cart = {};
+    saveCart();
+    renderCart();
+  };
+
+  /* Однакова кількість кожного з п'яти ароматів — чи то зібрано карточками
+     одна за одною, чи то натисканням «Додати набір» — це N наборів, тож
+     у кошику вони показані одним рядком зі своєю кількістю, а не п'ятьма
+     окремими позиціями. Повертає 0, якщо кількості нерівні (не набір). */
+  /* ± на рядку набору змінює базову кількість наборів для ВСІХ ароматів
+     одразу на те саме число — а не виставляє кожному однакове значення,
+     інакше злетів би окремо накопичений надлишок якогось аромату. */
+  const setBundleQty = (n) => {
+    const diff = n - setCount();
+    if (diff === 0) return;
+    PRODUCTS.forEach((p) => {
+      const next = (cart[p.id] || 0) + diff;
+      if (next <= 0) delete cart[p.id]; else cart[p.id] = Math.min(99, next);
+    });
+    saveCart();
+    renderCart();
+  };
+
+  /* Прибрати сам набір — мінус по одному базовому флакону кожного аромату;
+     що лишилось понад це (чийсь окремий надлишок) — лишається в кошику. */
+  const removeBundle = () => {
+    const n = setCount();
+    PRODUCTS.forEach((p) => {
+      const next = (cart[p.id] || 0) - n;
+      if (next <= 0) delete cart[p.id]; else cart[p.id] = next;
+    });
+    saveCart();
+    renderCart();
+  };
+
+  /* Смітничок біля позиції — прибрати її одразу, а не клікати «−» до нуля. */
+  const removeItem = (id) => {
+    delete cart[id];
+    saveCart();
+    renderCart();
+  };
+
+  /* Смітничок на рядку «поза набором» — прибрати лише надлишок цього
+     аромату, а не весь набір разом із ним. */
+  const removeExtra = (id) => {
+    const n = setCount();
+    if (n <= 0) delete cart[id]; else cart[id] = n;
+    saveCart();
+    renderCart();
+  };
+
+  /* Той самий смітничок скрізь — і на окремій позиції, і на наборі. */
+  const TRASH_SVG = `
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+      <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 .9 12.1a2 2 0 0 0 2 1.9h4.2a2 2 0 0 0 2-1.9L17 7"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
 
   /* ---------- Рендер позицій (спільний для шухляди й форми) ---------- */
   const lineHTML = (id, qty) => {
@@ -429,16 +499,70 @@
           <p class="oline__name">${esc(p.name)}</p>
           <p class="oline__ua">${VOLUME} · мило-піна</p>
         </div>
-        <div class="qty">
-          <button type="button" data-dec="${p.id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
-          <span>${qty}</span>
-          <button type="button" data-inc="${p.id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+        <div class="oline__actions">
+          <div class="qty">
+            <button type="button" data-dec="${p.id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
+            <span>${qty}</span>
+            <button type="button" data-inc="${p.id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+          </div>
+          <button type="button" class="oline__remove" data-remove="${p.id}" aria-label="Прибрати ${esc(p.name)} з кошика">${TRASH_SVG}</button>
         </div>
         <p class="oline__sum">${money(qty * PRICE)}</p>
       </div>`;
   };
 
-  const linesHTML = () => Object.entries(cart).map(([id, q]) => lineHTML(id, q)).join('');
+  const bundleLineHTML = (n, sum) => `
+    <div class="oline oline--bundle" data-line="bundle">
+      <span class="oline__badge" aria-hidden="true">
+        <svg viewBox="0 0 44 36" width="22" height="18" fill="currentColor"><g transform="translate(15 13) scale(0.33)"><path d="M0 -32 C1.6 -17.2 14.8 -4 32 0 C14.8 4 1.6 17.2 0 32 C-1.6 17.2 -14.8 4 -32 0 C-14.8 -4 -1.6 -17.2 0 -32 Z"/></g><g transform="translate(33 25) scale(0.20)"><path d="M0 -32 C1.6 -17.2 14.8 -4 32 0 C14.8 4 1.6 17.2 0 32 C-1.6 17.2 -14.8 4 -32 0 C-14.8 -4 -1.6 -17.2 0 -32 Z"/></g></svg>
+      </span>
+      <div>
+        <p class="oline__name">Набір Purrfect — 5 різних ароматів</p>
+        <p class="oline__ua">По одному флакону кожного аромату, ${VOLUME}</p>
+      </div>
+      <div class="oline__actions">
+        <div class="qty">
+          <button type="button" data-bundle-dec aria-label="Зменшити кількість наборів">−</button>
+          <span>${n}</span>
+          <button type="button" data-bundle-inc aria-label="Збільшити кількість наборів">+</button>
+        </div>
+        <button type="button" class="oline__remove" data-clear-bundle aria-label="Прибрати набір">${TRASH_SVG}</button>
+      </div>
+      <p class="oline__sum">${money(sum)}</p>
+    </div>`;
+
+  /* Аромат, узятий понад базові набори, — окремим рядком і за повною
+     ціною: акція саме на набір, а не на весь вміст кошика. */
+  const extraLineHTML = (id, extra) => {
+    const p = byId(id);
+    return `
+      <div class="oline" data-line="${p.id}-extra">
+        <img src="${p.img}" alt="" loading="lazy" data-accent="${p.accent}">
+        <div>
+          <p class="oline__name">${esc(p.name)}</p>
+          <p class="oline__ua">${VOLUME} · поза набором</p>
+        </div>
+        <div class="oline__actions">
+          <div class="qty">
+            <button type="button" data-dec="${p.id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
+            <span>${extra}</span>
+            <button type="button" data-inc="${p.id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+          </div>
+          <button type="button" class="oline__remove" data-remove-extra="${p.id}" aria-label="Прибрати додаткові флакони ${esc(p.name)}">${TRASH_SVG}</button>
+        </div>
+        <p class="oline__sum">${money(extra * PRICE)}</p>
+      </div>`;
+  };
+
+  const linesHTML = () => {
+    const n = setCount();
+    if (n <= 0) return Object.entries(cart).map(([id, q]) => lineHTML(id, q)).join('');
+    const extras = PRODUCTS
+      .filter((p) => (cart[p.id] || 0) > n)
+      .map((p) => extraLineHTML(p.id, (cart[p.id] || 0) - n))
+      .join('');
+    return bundleLineHTML(n, bundleSum(n)) + extras;
+  };
 
   const emptyHTML = `
     <div class="empty">
@@ -467,6 +591,9 @@
 
     // лічильник у шапці
     $$('[data-cart-count]').forEach((el) => { el.textContent = t.qty; });
+
+    // «Очистити» — видно, лише коли є що чистити
+    $$('[data-cart-clear]').forEach((el) => { el.hidden = t.qty === 0; });
 
     // шухляда
     const body = $('[data-cart-body]');
@@ -509,10 +636,13 @@
 
       const p = byId(id);
       slot.innerHTML = qty
-        ? `<div class="qty qty--card">
-             <button type="button" data-dec="${id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
-             <span>${qty}</span>
-             <button type="button" data-inc="${id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+        ? `<div class="qty-row">
+             <div class="qty qty--card">
+               <button type="button" data-dec="${id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
+               <span>${qty}</span>
+               <button type="button" data-inc="${id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+             </div>
+             <button type="button" class="oline__remove" data-remove="${id}" aria-label="Прибрати ${esc(p.name)} з кошика">${TRASH_SVG}</button>
            </div>`
         : `<button class="add" type="button" data-add="${id}">Додати до кошика</button>`;
     });
@@ -524,12 +654,32 @@
       const qty = cart[id] || 0;
       const p = byId(id);
       modalSlot.innerHTML = qty
-        ? `<div class="qty qty--card">
-             <button type="button" data-dec="${id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
-             <span>${qty}</span>
-             <button type="button" data-inc="${id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+        ? `<div class="qty-row">
+             <div class="qty qty--card">
+               <button type="button" data-dec="${id}" aria-label="Зменшити кількість ${esc(p.name)}">−</button>
+               <span>${qty}</span>
+               <button type="button" data-inc="${id}" aria-label="Збільшити кількість ${esc(p.name)}">+</button>
+             </div>
+             <button type="button" class="oline__remove" data-remove="${id}" aria-label="Прибрати ${esc(p.name)} з кошика">${TRASH_SVG}</button>
            </div>`
         : `<button class="add" type="button" data-add="${id}">У кошик</button>`;
+    }
+
+    // ціна в тій самій картці: показуємо суму за наклацану кількість,
+    // а не завжди ціну за один флакон
+    const priceEl = $('[data-modal-price]');
+    if (priceEl) {
+      const id = priceEl.dataset.modalPrice;
+      const qty = cart[id] || 0;
+      const main = $('[data-price-main]', priceEl);
+      const note = $('[data-price-note]', priceEl);
+      if (qty > 0) {
+        main.textContent = money(qty * PRICE);
+        note.textContent = `${qty} × ${PRICE} ₴ · ${VOLUME}`;
+      } else {
+        main.textContent = `${PRICE} ₴`;
+        note.textContent = `за флакон ${VOLUME}`;
+      }
     }
 
     // фолбек для фото в позиціях
@@ -561,6 +711,7 @@
     if (drawer) {
       $$('[data-cart-open]').forEach((b) => b.addEventListener('click', openDrawer));
       drawer.addEventListener('click', (e) => {
+        if (e.target.closest('[data-cart-clear]')) { clearCart(); return; }
         if (e.target.closest('[data-cart-close]')) closeDrawer();
       });
       document.addEventListener('keydown', (e) => {
@@ -575,11 +726,26 @@
       if (inc) setQty(inc.dataset.inc, (cart[inc.dataset.inc] || 0) + 1);
       if (dec) setQty(dec.dataset.dec, (cart[dec.dataset.dec] || 0) - 1);
 
+      const remove = e.target.closest('[data-remove]');
+      if (remove) removeItem(remove.dataset.remove);
+
+      const removeXtra = e.target.closest('[data-remove-extra]');
+      if (removeXtra) removeExtra(removeXtra.dataset.removeExtra);
+
       const add = e.target.closest('[data-add]');
       if (add) addToCart(add.dataset.add);
 
       const bundleBtn = e.target.closest('[data-bundle-add]');
       if (bundleBtn) addBundle();
+
+      const bundleRemove = e.target.closest('[data-clear-bundle]');
+      if (bundleRemove) removeBundle();
+
+      const bundleInc = e.target.closest('[data-bundle-inc]');
+      if (bundleInc) setBundleQty(setCount() + 1);
+
+      const bundleDec = e.target.closest('[data-bundle-dec]');
+      if (bundleDec) setBundleQty(setCount() - 1);
     });
   };
 
@@ -658,10 +824,8 @@
 
             <div class="pm__panel">
               <div class="pm__price-row">
-                <p class="pm__price">${PRICE} ₴<small>за флакон ${VOLUME}</small></p>
-                <p class="pm__bundle">
-                  <b>5 ароматів</b> — <s>${money(PRICE * PRODUCTS.length)}</s> ${money(BUNDLE_PRICE)}
-                  <span>вигода ${money(PRICE * PRODUCTS.length - BUNDLE_PRICE)}</span>
+                <p class="pm__price" data-modal-price="${p.id}">
+                  <span data-price-main>${PRICE} ₴</span><small data-price-note>за флакон ${VOLUME}</small>
                 </p>
               </div>
 
@@ -684,8 +848,8 @@
             </ul>
 
             <p class="pm__bundle-note">
-              Знижка −10% вмикається в кошику сама, щойно в замовленні набирається
-              п'ять флаконів. <button class="link-more" type="button" data-bundle-add>Додати набір</button>
+              Знижка −10% вмикається сама, щойно в кошику є по одному флакону
+              кожного з п'яти різних ароматів. <button class="link-more" type="button" data-bundle-add>Додати набір</button>
             </p>
           </div>
         </div>`;

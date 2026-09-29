@@ -990,6 +990,16 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   color: var(--text-2);
   text-wrap: pretty;
 }
+/* Винесено з тексту окремим акцентом — той самий прийом, що й "в одному
+   наборі" в заголовку, тільки жирнішим написанням, а не тонким курсивом. */
+.bundle__badge {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: clamp(1.15rem, 2vw, 1.6rem);
+  line-height: 1.2;
+  color: var(--gold-soft);
+  margin-top: var(--space-4);
+}
 
 .bundle__offer {
   text-align: center;
@@ -1947,6 +1957,31 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.oline__actions { display: flex; align-items: center; gap: var(--space-3); }
+
+/* Рівно по одному флаконі кожного аромату — один рядок замість п'яти */
+.oline__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px; height: 60px;
+  border-radius: 10px;
+  background: linear-gradient(150deg, rgba(200, 162, 74, .22), rgba(12, 59, 46, .5));
+  color: var(--gold-soft);
+}
+.oline__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--hairline-2);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.oline__remove:hover { color: var(--gold-soft); border-color: rgba(200, 162, 74, .5); }
 
 .qty {
   display: inline-flex;
@@ -1991,10 +2026,13 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   font-weight: 600;
   color: var(--gold-soft);
 }
-/* У картці лічильник займає місце кнопки, тож розтягується так само */
+/* У картці лічильник займає місце кнопки, тож розтягується так само.
+   Смітничок стоїть поруч — прибрати наклацану кількість одразу. */
+.qty-row { display: flex; align-items: center; gap: var(--space-3); }
+.product__action .qty-row { width: 100%; }
 .product__action .qty--card {
   display: flex;
-  width: 100%;
+  flex: 1;
   justify-content: space-between;
 }
 
@@ -2303,29 +2341,6 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   text-transform: uppercase;
   color: var(--text-3);
 }
-.pm__bundle {
-  text-align: right;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--gold-soft);
-  font-variant-numeric: tabular-nums;
-}
-.pm__bundle b { color: var(--cream); font-weight: 600; }
-.pm__bundle s {
-  color: var(--text-3);
-  text-decoration-color: rgba(200, 162, 74, .6);
-  margin-right: 6px;
-}
-.pm__bundle span {
-  display: block;
-  margin-top: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-  color: var(--gold);
-}
-
 .pm__actions {
   display: flex;
   flex-wrap: wrap;
@@ -2429,6 +2444,19 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   text-transform: uppercase;
   color: var(--cream);
 }
+.drawer__head-actions { display: flex; align-items: center; gap: var(--space-4); }
+.drawer__clear {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-3);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+.drawer__clear:hover { color: var(--gold-soft); }
 .drawer__close {
   display: inline-flex;
   align-items: center;
@@ -2800,7 +2828,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   body.has-sticky .footer { padding-bottom: 96px; }
 
   .oline { grid-template-columns: 50px minmax(0, 1fr) auto; row-gap: 10px; }
-  .oline img { width: 50px; height: 50px; }
+  .oline img, .oline__badge { width: 50px; height: 50px; }
   .oline__sum { grid-column: 2 / -1; text-align: right; }
 
   .footer__bottom { justify-content: center; text-align: center; }
@@ -2859,10 +2887,10 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   .pm__actions { flex-direction: column; align-items: stretch; }
   .pm__actions .btn { flex: 0 0 auto; width: 100%; }
   .pm__action .add,
-  .pm__action .qty--card { width: 100%; justify-content: space-between; }
+  .pm__action .qty-row { width: 100%; }
+  .pm__action .qty--card { flex: 1; justify-content: space-between; }
   .pm__action .add { justify-content: center; }
   .pm__price-row { margin-bottom: var(--space-4); }
-  .pm__bundle { text-align: left; }
 }
 
 /* ---------- Мобільне меню ---------- */

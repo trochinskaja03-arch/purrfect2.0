@@ -125,7 +125,7 @@
         <a href="dostavka.html">Доставка та оплата</a>, умови обміну та повернення —
         на сторінці <a href="obmin-ta-povernennia.html">Обмін та повернення</a>.
         Правила оформлення й виконання замовлень — у
-        <a href="oferta.html">договорі публічної оферти</a>. Інформація про обробку
+        <a href="oferta.html">Договорі публічної оферти</a>. Інформація про обробку
         персональних даних — у
         <a href="polityka-konfidentsiynosti.html">Політиці конфіденційності</a>.
       </p>
@@ -154,7 +154,7 @@
         <p class="footer__label">Інформація</p>
         <ul class="footer__list">
           <li><a href="dlia-biznesu.html">Для бізнесу</a></li>
-          <li><a href="dostavka.html">Доставка</a></li>
+          <li><a href="dostavka.html">Доставка та оплата</a></li>
           <li><a href="oferta.html">Договір публічної оферти</a></li>
           <li><a href="polityka-konfidentsiynosti.html">Політика конфіденційності</a></li>
           <li><a href="obmin-ta-povernennia.html">Обмін та повернення</a></li>
@@ -181,11 +181,14 @@
   <aside class="drawer__panel">
     <header class="drawer__head">
       <p class="drawer__ttl">Кошик</p>
-      <button class="drawer__close" type="button" data-cart-close aria-label="Закрити кошик">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="drawer__head-actions">
+        <button class="drawer__clear" type="button" data-cart-clear hidden>Очистити</button>
+        <button class="drawer__close" type="button" data-cart-close aria-label="Закрити кошик">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </header>
     <div class="drawer__body" data-cart-body></div>
     <footer class="drawer__foot" data-cart-foot></footer>
