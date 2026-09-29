@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "purrfect-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8793"],
+      "port": 8793
+    }
+  ]
+}
