@@ -421,7 +421,7 @@ vercel dev
 
 | Що | Файл | Розмір |
 |---|---|---|
-| Перший екран | `image/hero.jpg` / `.webp` / `hero-mobile.webp` | 1672×941 |
+| Перший екран | `image/hero-lemon.jpg` (десктоп) / `hero-lemon-mobile.jpg` (мобільний, квадрат) | 2560×1440 / 1600×1600 |
 | Тло всього сайту | `image/bg-marble.jpg` | 1000×580 |
 | Блок «Про бренд» | `image/foam-hands.jpg` | 1200×1200 |
 | Картки ароматів | `image/<id>.jpg` | 800×1000 (4:5) |
