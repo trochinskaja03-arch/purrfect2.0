@@ -995,10 +995,14 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
 .bundle__badge {
   font-family: var(--font-brand);
   font-weight: 700;
-  font-size: clamp(1.15rem, 2vw, 1.6rem);
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
   line-height: 1.2;
   color: var(--gold-soft);
   margin-top: var(--space-4);
+  /* Та сама ширина, що й абзац вище, плюс вирівнювання праворуч — так
+     напис стає під кінцем тексту, а не під його початком. */
+  max-width: 54ch;
+  text-align: right;
 }
 
 .bundle__offer {
@@ -2822,6 +2826,8 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   /* на вузькому екрані банер набору складається в стовпчик */
   .bundle { grid-template-columns: minmax(0, 1fr); text-align: center; }
   .bundle__text { max-width: 46ch; margin-inline: auto; }
+  /* у стовпчик усе по центру, тож зсув праворуч тут недоречний */
+  .bundle__badge { max-width: 46ch; margin-inline: auto; text-align: center; }
 
   .sticky-buy { display: flex; }
   /* місце під липку панель тримаємо лише тоді, коли вона справді видима */
