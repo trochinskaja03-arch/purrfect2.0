@@ -482,10 +482,16 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   padding-top: clamp(80px, 12vh, 140px);
 }
 
+/* Російське гасло «твой ежедневный / ароматный ритуал» довше за
+   українське: при однаковому кеглі обидва рядки ламалися навпіл і
+   заголовок ставав п'ятирядковим замість трьох. Множник прибирає це
+   одразу на всіх ширинах — ним помножені всі три розміри нижче. */
+html[lang="ru"] { --hero-title-scale: .86; }
+
 .hero__title {
   font-family: var(--font-brand);
   font-weight: 300;
-  font-size: clamp(2.7rem, 6vw, 5.4rem);
+  font-size: calc(clamp(2.7rem, 6vw, 5.4rem) * var(--hero-title-scale, 1));
   line-height: 1.02;
   letter-spacing: -.025em;
   margin: 0 0 var(--space-5);
@@ -2868,7 +2874,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
     padding-bottom: var(--space-4);
   }
 
-  .hero__title { font-size: clamp(2.2rem, 10.5vw, 3.2rem); margin-bottom: var(--space-4); }
+  .hero__title { font-size: calc(clamp(2.2rem, 10.5vw, 3.2rem) * var(--hero-title-scale, 1)); margin-bottom: var(--space-4); }
   .hero__lead {
     font-size: 15px;
     line-height: 1.65;
@@ -2940,7 +2946,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
 /* ---------- Ландшафт на телефоні ---------- */
 @media (max-height: 520px) and (orientation: landscape) {
   .hero__copy { padding-top: 76px; }
-  .hero__title { font-size: clamp(2rem, 5.2vw, 3rem); }
+  .hero__title { font-size: calc(clamp(2rem, 5.2vw, 3rem) * var(--hero-title-scale, 1)); }
   .hero__lead { margin-bottom: var(--space-4); }
 }
 
