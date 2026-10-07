@@ -187,8 +187,6 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
   background: var(--ink-2) url("image/bg-marble.jpg") center / cover no-repeat;
   /* запас по краях замість колишнього inset: -4% */
   transform: scale(1.06);
-  animation: sceneDrift 90s ease-in-out infinite alternate;
-  will-change: transform;
 }
 /* Скрим: гасить яскраву смугу мармуру, щоб текст лишався читабельним */
 .bg-scene::before {
@@ -199,26 +197,19 @@ h1, h2, h3, h4 { margin: 0; font-weight: inherit; }
     radial-gradient(120% 90% at 50% 38%, rgba(2, 12, 9, .28) 0%, rgba(2, 12, 9, .74) 100%),
     linear-gradient(180deg, rgba(2, 12, 9, .5), rgba(2, 12, 9, .42));
 }
-/* Відблиск, що повільно мандрує по каменю */
+/* Нерухомий відблиск на камені.
+
+   Раніше тло жило двома анімаціями: sceneDrift повільно наїжджав на
+   мармур, а sceneGlow возив оцей відблиск по екрану (28% вправо, 16%
+   вниз за 52 секунди). На десктопі це читалося як пляма, що сама
+   собою повзе по сторінці, — тло має бути декорацією, а не рухом,
+   який відволікає від тексту. Обидві анімації прибрані зовсім, тож
+   фон однаково статичний скрізь. */
 .bg-scene::after {
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(38% 46% at 20% 16%, rgba(120, 210, 170, .17), transparent 70%);
-  animation: sceneGlow 52s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-@keyframes sceneDrift {
-  0%   { transform: scale(1.06) translate3d(0, 0, 0); }
-  100% { transform: scale(1.13) translate3d(-1.5%, 1%, 0); }
-}
-@keyframes sceneGlow {
-  0%   { transform: translate3d(0, 0, 0); opacity: .5; }
-  100% { transform: translate3d(28%, 16%, 0); opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bg-scene,
-  .bg-scene::after { animation: none; }
 }
 
 .wrap {
@@ -2737,18 +2728,6 @@ html[lang="ru"] { --hero-title-scale: .86; }
    Жодна з цих правок не змінює вигляд сторінки — лише ціну кадру.
    ============================================================ */
 @media (max-width: 1100px) {
-  /* 1. Тло сцени — фіксований шар на весь екран, який безперервно
-        масштабується (sceneDrift) і по якому мандрує відблиск
-        (sceneGlow). Поки анімація жива, шар треба перемальовувати,
-        і кожен кадр прокрутки стає в чергу за нею. Фон лишається
-        тим самим, просто нерухомим: за 90 секунд повільного наїзду
-        на телефоні рух однаково ніхто не встигає помітити. */
-  .bg-scene,
-  .bg-scene::after {
-    animation: none;
-    will-change: auto;
-  }
-
   /* Тло помітно світліше, ніж на десктопі: на малому екрані мармуру
      видно менше, і та сама затемнювальна пелена «з'їдала» і колір,
      і золоті прожилки. Перший екран це не зачіпає — у нього власне
@@ -3024,14 +3003,6 @@ html[lang="ru"] { --hero-title-scale: .86; }
    ширини. Саме те, що тут потрібно.
    ============================================================ */
 @media (hover: none) {
-  /* Фон нерухомий. Анімація на весь екран — найдорожче, що є на
-     сторінці, і саме вона створювала ефект «фон пливе». */
-  .bg-scene,
-  .bg-scene::after {
-    animation: none;
-    will-change: auto;
-  }
-
   /* Розмиття тла перераховується на кожному кадрі прокрутки.
      На iOS воно ще й малює видимі смуги на межі шапки. */
   .topbar.is-stuck,
