@@ -16,12 +16,7 @@
 
 import crypto from 'node:crypto';
 import { priceOrder } from './_catalog.mjs';
-
-const json = (body, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
-  });
+import { sendJson, readJson } from './_http.mjs';
 
 const SHIPPING_LABELS = {
   'np-warehouse': 'Нова Пошта — відділення / поштомат',
@@ -115,12 +110,17 @@ function liqpayPacket({ orderId, amount, description, siteUrl }) {
 }
 
 /* ---------- Обробник ---------- */
-export default async (req) => {
+export default async function handler(req, res) {
+  /* json() лишається з тим самим викликом, що й раніше, — просто тепер
+     пише у res замість повертати Response. Так уся логіка нижче
+     лишилася незмінною. */
+  const json = (body, status = 200) => sendJson(res, body, status);
+
   if (req.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
 
   let body;
   try {
-    body = await req.json();
+    body = await readJson(req);
   } catch {
     return json({ ok: false, error: 'Очікується JSON' }, 400);
   }
@@ -212,4 +212,4 @@ export default async (req) => {
     console.error('[order] LiqPay:', err);
     return json({ ok: false, error: 'Оплата тимчасово недоступна' }, 503);
   }
-};
+}

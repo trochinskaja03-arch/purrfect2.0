@@ -8,13 +8,9 @@
      { "type": "ping" }                            — перевірка доступності
 */
 
-const NP_URL = 'https://api.novaposhta.ua/v2.0/json/';
+import { sendJson, readJson } from './_http.mjs';
 
-const json = (body, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
-  });
+const NP_URL = 'https://api.novaposhta.ua/v2.0/json/';
 
 async function callNP(apiKey, modelName, calledMethod, methodProperties) {
   const res = await fetch(NP_URL, {
@@ -32,7 +28,9 @@ async function callNP(apiKey, modelName, calledMethod, methodProperties) {
   return body.data || [];
 }
 
-export default async (req) => {
+export default async function handler(req, res) {
+  const json = (body, status = 200) => sendJson(res, body, status);
+
   if (req.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
 
   const apiKey = process.env.NOVAPOSHTA_API_KEY;
@@ -40,7 +38,7 @@ export default async (req) => {
 
   let payload;
   try {
-    payload = await req.json();
+    payload = await readJson(req);
   } catch {
     return json({ ok: false, error: 'Очікується JSON' }, 400);
   }
@@ -97,4 +95,4 @@ export default async (req) => {
     console.error('[np]', err);
     return json({ ok: false, error: err.message }, 502);
   }
-};
+}

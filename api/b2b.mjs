@@ -8,11 +8,7 @@
    покупцеві прямі контакти, ніж мовчки загубити заявку.
 */
 
-const json = (body, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
-  });
+import { sendJson, readJson } from './_http.mjs';
 
 const clean = (s, max = 300) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
@@ -45,12 +41,14 @@ async function notifyTelegram(text) {
   }
 }
 
-export default async (req) => {
+export default async function handler(req, res) {
+  const json = (body, status = 200) => sendJson(res, body, status);
+
   if (req.method !== 'POST') return json({ ok: false, error: 'Method not allowed' }, 405);
 
   let body;
   try {
-    body = await req.json();
+    body = await readJson(req);
   } catch {
     return json({ ok: false, error: 'Очікується JSON' }, 400);
   }
@@ -79,4 +77,4 @@ export default async (req) => {
   if (!sent) return json({ ok: false, error: 'Не вдалося надіслати заявку' }, 503);
 
   return json({ ok: true });
-};
+}

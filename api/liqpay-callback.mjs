@@ -8,6 +8,7 @@
 */
 
 import crypto from 'node:crypto';
+import { sendText, readBody } from './_http.mjs';
 
 const STATUS_UA = {
   success:      '✅ Оплачено',
@@ -19,8 +20,7 @@ const STATUS_UA = {
   failure:      '❌ Помилка оплати',
   error:        '❌ Помилка оплати',
   reversed:     '↩️ Повернення коштів'
-};
-
+}
 async function notifyTelegram(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chat = process.env.TELEGRAM_CHAT_ID;
@@ -37,31 +37,44 @@ async function notifyTelegram(text) {
   }
 }
 
-export default async (req) => {
-  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+export default async function handler(req, res) {
+  /* Відповідаємо завжди 200 — навіть на відхилений запит. Інакше
+     LiqPay вважатиме доставку невдалою й повторюватиме її знову. */
+  const ok = () => sendText(res, 'OK', 200);
+
+  if (req.method !== 'POST') return sendText(res, 'Method not allowed', 405);
 
   const privateKey = process.env.LIQPAY_PRIVATE_KEY;
   if (!privateKey) {
     console.error('[liqpay-callback] LIQPAY_PRIVATE_KEY не налаштовано');
-    return new Response('OK', { status: 200 });
+    return ok();
   }
 
   let data = '';
   let signature = '';
 
   try {
-    const raw = await req.text();
-    const params = new URLSearchParams(raw);
-    data = params.get('data') || '';
-    signature = params.get('signature') || '';
+    /* LiqPay шле form-urlencoded. Vercel таке тіло зазвичай розбирає
+       сам і віддає об'єктом, але якщо ні — читаємо рядок і розбираємо
+       вручну. */
+    const body = await readBody(req);
+    if (body && typeof body === 'object' && !Buffer.isBuffer(body)) {
+      data = String(body.data ?? '');
+      signature = String(body.signature ?? '');
+    } else {
+      const raw = Buffer.isBuffer(body) ? body.toString('utf8') : String(body ?? '');
+      const params = new URLSearchParams(raw);
+      data = params.get('data') || '';
+      signature = params.get('signature') || '';
+    }
   } catch (err) {
     console.error('[liqpay-callback] не вдалося прочитати тіло:', err);
-    return new Response('OK', { status: 200 });
+    return ok();
   }
 
   if (!data || !signature) {
     console.warn('[liqpay-callback] порожній data або signature');
-    return new Response('OK', { status: 200 });
+    return ok();
   }
 
   /* --- перевірка підпису --- */
@@ -74,7 +87,7 @@ export default async (req) => {
   const b = Buffer.from(signature);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     console.warn('[liqpay-callback] підпис не збігається — запит відхилено');
-    return new Response('OK', { status: 200 });
+    return ok();
   }
 
   /* --- підпис валідний, читаємо платіж --- */
@@ -83,7 +96,7 @@ export default async (req) => {
     payload = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
   } catch (err) {
     console.error('[liqpay-callback] не вдалося розібрати data:', err);
-    return new Response('OK', { status: 200 });
+    return ok();
   }
 
   const { order_id: orderId, status, amount, currency, payment_id: paymentId, err_description: errDesc } = payload;
@@ -100,5 +113,5 @@ export default async (req) => {
     errDesc ? `Причина: ${errDesc}` : null
   ].filter(Boolean).join('\n'));
 
-  return new Response('OK', { status: 200 });
-};
+  return ok();
+}
