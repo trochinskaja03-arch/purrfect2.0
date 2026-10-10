@@ -13,10 +13,15 @@ export const PRODUCTS = {
 };
 
 /* Знижка за набір — має збігатися з TIERS у script.js.
-   П'ять флаконів — повний набір ароматів: 5 × 499 = 2495 ₴ → 2245 ₴. */
+   Набір — це п'ять РІЗНИХ ароматів: 5 × 499 = 2495 ₴ → 2245 ₴.
+   Вісім флаконів одного аромату набором не є й знижки не дають. */
 const TIERS = [
   { min: 5, rate: 0.10 }
 ];
+
+const SCENTS = Object.keys(PRODUCTS);
+const BUNDLE_RATE = TIERS.find((t) => SCENTS.length >= t.min)?.rate || 0;
+const BUNDLE_SUB = SCENTS.length * PRICE;
 
 /**
  * Перераховує позиції та суму замовлення з нуля.
@@ -40,8 +45,15 @@ export function priceOrder(rawItems) {
 
   const qty = items.reduce((a, i) => a + i.qty, 0);
   const subtotal = qty * PRICE;
-  const tier = TIERS.find((t) => qty >= t.min);
-  const discount = tier ? Math.round(subtotal * tier.rate) : 0;
+
+  /* Скільки повних наборів зібрано. Набір вимагає всіх п'яти ароматів,
+     тож їхня кількість дорівнює мінімуму по ароматах: по два кожного,
+     крім одного, де лише 1, — це один набір, а не два. Усе понад цей
+     мінімум іде за повною ціною. Та сама логіка, що в setCount()
+     у script.js, — інакше сайт і сервер рахували б різні суми. */
+  const byId = new Map(items.map((i) => [i.id, i.qty]));
+  const sets = Math.min(...SCENTS.map((id) => byId.get(id) || 0));
+  const discount = sets > 0 ? Math.round(sets * BUNDLE_SUB * BUNDLE_RATE) : 0;
 
   items.forEach((i) => { i.sum = i.qty * PRICE; });
 
