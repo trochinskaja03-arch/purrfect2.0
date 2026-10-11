@@ -1,0 +1,14 @@
+# Відкриваємо для індексації весь сайт, крім службових адрес.
+
+User-agent: *
+Allow: /
+
+# Сторінка оформлення не має сенсу в пошуку: без кошика вона порожня.
+# У самій zamovlennya.html стоїть noindex — тут дублюємо для тих роботів,
+# які читають robots.txt, але не доходять до meta-тегів.
+Disallow: /zamovlennya
+
+# Серверні функції — не контент.
+Disallow: /api/
+
+Sitemap: https://purrfect.com.ua/sitemap.xml
