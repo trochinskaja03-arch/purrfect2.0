@@ -1,7 +1,7 @@
 /* ============================================================
    Purrfect — продавальний лендинг
    Кошик, каталог ароматів, заявка для бізнесу, оформлення
-   замовлення (Нова Пошта / Укрпошта) та оплата через LiqPay.
+   замовлення (Нова Пошта / Укрпошта) та оплата через WayForPay.
 
    Один файл обслуговує всі сторінки сайту. Кожен блок перед
    роботою перевіряє, чи є його розмітка на поточній сторінці,
@@ -1879,7 +1879,7 @@
     return {
       customer: { name: v('name'), phone },
       delivery,
-      payment: 'liqpay',
+      payment: 'wayforpay',
       comment: v('comment'),
       items: Object.entries(cart).map(([id, qty]) => {
         const p = byId(id);
@@ -1890,98 +1890,99 @@
   };
 
   /* ==========================================================
-     Оплата карткою — вікно LiqPay просто в блоці замовлення
+     Оплата карткою — віджет WayForPay
      ==========================================================
-     Покупець вводить номер картки вручну, не виходячи зі сторінки:
-     Apple Pay і Google Pay потребують Face ID / Touch ID і підхожого
-     пристрою, тож не можуть бути єдиним шляхом.
+     Віджет відкривається поверх сторінки власним вікном: покупець
+     не йде на чужий сайт і не втрачає заповнену форму.
 
-     Поля картки — це iframe LiqPay усередині нашої сторінки. Номер,
-     термін і CVV набираються в ньому й ідуть напряму до LiqPay: на наш
-     сайт і на наш сервер вони не потрапляють. Своїх полів для картки ми
-     не робимо принципово — приймати реквізити на власному домені можна
-     лише з сертифікацією PCI DSS.
+     Поля картки живуть в iframe WayForPay. Номер, термін і CVV
+     набираються в ньому й ідуть напряму до них: на наш сайт і на наш
+     сервер вони не потрапляють. Своїх полів для картки ми не робимо
+     принципово — приймати реквізити на власному домені можна лише
+     з сертифікацією PCI DSS.
 
      Якщо скрипт віджета не завантажився (блокувальник, погана мережа,
-     жорсткий корпоративний проксі) — вмикається запасний шлях: звичайний
-     перехід на сторінку оплати LiqPay. */
-  const LIQPAY_JS = 'https://static.liqpay.ua/libjs/checkout.js';
-  const LIQPAY_JS_TIMEOUT = 8000;
-  let liqpayJs = null;
+     жорсткий корпоративний проксі) — вмикається запасний шлях: звичайна
+     форма з переходом на захищену сторінку WayForPay. */
+  const WFP_JS = 'https://secure.wayforpay.com/server/pay-widget.js';
+  const WFP_JS_TIMEOUT = 8000;
+  let wfpJs = null;
 
-  const loadLiqpay = () => {
-    if (window.LiqPayCheckout) return Promise.resolve(window.LiqPayCheckout);
-    if (!liqpayJs) {
-      liqpayJs = new Promise((resolve, reject) => {
+  const loadWayforpay = () => {
+    if (window.Wayforpay) return Promise.resolve(window.Wayforpay);
+    if (!wfpJs) {
+      wfpJs = new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = LIQPAY_JS;
+        s.src = WFP_JS;
         s.async = true;
-        const fail = () => reject(new Error('Скрипт LiqPay недоступний'));
-        const timer = setTimeout(fail, LIQPAY_JS_TIMEOUT);
+        const fail = () => reject(new Error('Скрипт WayForPay недоступний'));
+        const timer = setTimeout(fail, WFP_JS_TIMEOUT);
         s.onload = () => {
           clearTimeout(timer);
-          if (window.LiqPayCheckout) resolve(window.LiqPayCheckout); else fail();
+          if (window.Wayforpay) resolve(window.Wayforpay); else fail();
         };
         s.onerror = () => { clearTimeout(timer); fail(); };
         document.head.appendChild(s);
       }).catch((err) => {
-        liqpayJs = null;   // щоб наступна спроба почалася з чистого аркуша
+        wfpJs = null;   // щоб наступна спроба почалася з чистого аркуша
         throw err;
       });
     }
-    return liqpayJs;
+    return wfpJs;
   };
 
-  /* Статуси LiqPay, після яких замовлення вважається оформленим.
-     Остаточне підтвердження однаково приходить нам на server_url —
-     тут ми лише показуємо покупцеві, що сталося. */
-  const PAID_OK = ['success', 'sandbox', 'wait_accept', 'wait_secure', 'subscribed'];
-  const PAID_FAIL = ['failure', 'error', 'reversed'];
+  /* Події віджета приходять двома шляхами: колбеками в run() і
+     повідомленнями у вікно. Слухаємо обидва, бо закриття хрестиком
+     приходить тільки повідомленням. Прапорець не дає відпрацювати
+     двічі на одну й ту саму оплату. */
+  const openWayforpay = async (packet, onResult) => {
+    const Widget = await loadWayforpay();
+    const widget = new Widget();
 
-  const openLiqpayEmbed = async (packet, onResult) => {
-    const panel = $('[data-pay-embed]');
-    const box = $('[data-liqpay-embed]');
-    if (!panel || !box) throw new Error('Немає місця під вікно оплати');
+    let done = false;
+    const once = (kind, res) => {
+      if (done) return;
+      if (kind !== 'close') done = true;
+      onResult(kind, res);
+    };
 
-    const widget = await loadLiqpay();
+    const onMessage = (e) => {
+      if (e.data === 'WfpWidgetEventApproved') once('ok');
+      else if (e.data === 'WfpWidgetEventDeclined') once('err');
+      else if (e.data === 'WfpWidgetEventPending') once('pending');
+      else if (e.data === 'WfpWidgetEventClose') once('close');
+    };
+    window.addEventListener('message', onMessage);
 
-    box.innerHTML = '';
-    panel.hidden = false;
-
-    widget.init({
-      data: packet.data,
-      signature: packet.signature,
-      embedTo: '#liqpay-embed',
-      language: 'uk',
-      mode: 'embed'
-    }).on('liqpay.callback', (res) => {
-      const st = res && res.status;
-      if (PAID_OK.includes(st)) onResult('ok', res);
-      else if (PAID_FAIL.includes(st)) onResult('err', res);
-    });
-
-    panel.scrollIntoView({ ...scrollOpts, block: 'center' });
+    widget.run(
+      packet.fields,
+      (res) => once('ok', res),
+      (res) => once('err', res),
+      (res) => once('pending', res)
+    );
   };
 
-  const closeLiqpayEmbed = () => {
-    const panel = $('[data-pay-embed]');
-    const box = $('[data-liqpay-embed]');
-    if (panel) panel.hidden = true;
-    if (box) box.innerHTML = '';
-  };
-
-  /* Непомітна форма → редірект на захищену сторінку LiqPay */
-  const goLiqpay = ({ data, signature, checkoutUrl }) => {
+  /* Непомітна форма → перехід на захищену сторінку WayForPay.
+     Поля-масиви (назва, кількість, ціна) передаються з квадратними
+     дужками в імені — так їх чекає їхній бік. */
+  const goWayforpay = ({ checkoutUrl, fields }) => {
     const f = document.createElement('form');
     f.method = 'POST';
-    f.action = checkoutUrl || 'https://www.liqpay.ua/api/3/checkout';
+    f.action = checkoutUrl;
     f.acceptCharset = 'utf-8';
     f.style.display = 'none';
-    [['data', data], ['signature', signature]].forEach(([n, val]) => {
-      const i = document.createElement('input');
-      i.type = 'hidden'; i.name = n; i.value = val;
-      f.appendChild(i);
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const list = Array.isArray(value) ? value : [value];
+      list.forEach((v) => {
+        const i = document.createElement('input');
+        i.type = 'hidden';
+        i.name = Array.isArray(value) ? `${name}[]` : name;
+        i.value = v;
+        f.appendChild(i);
+      });
     });
+
     document.body.appendChild(f);
     f.submit();
   };
@@ -1999,34 +2000,35 @@
     setLabel();
 
     /* Поки відкрите вікно оплати, кнопку ховаємо: інакше покупець може
-       натиснути її вдруге й створити ще одне замовлення на ту саму суму. */
+       натиснути її вдруге й створити ще одне замовлення на ту саму суму.
+
+       Кошик чистимо лише після успішної оплати. Якщо покупець закрив
+       вікно або картка не пройшла — усе лишається на місці, щоб не
+       починати оформлення спочатку. */
     const payDone = (kind, res) => {
-      if (kind === 'ok') {
+      if (kind === 'ok' || kind === 'pending') {
         cart = {};
         saveCart();
         renderCart();
-        closeLiqpayEmbed();
         submit.hidden = false;
         form.reset();
         setLabel();
-        status.textContent = 'Дякуємо! Оплату прийнято. Щойно банк підтвердить її, ми надішлемо номер ТТН у SMS.';
+        status.textContent = kind === 'ok'
+          ? 'Дякуємо! Оплату прийнято. Щойно банк підтвердить її, ми надішлемо номер ТТН у SMS.'
+          : 'Дякуємо! Платіж обробляється. Щойно банк його підтвердить, ми зателефонуємо та надішлемо номер ТТН.';
         status.className = 'order__status is-ok';
+      } else if (kind === 'close') {
+        submit.hidden = false;
+        status.textContent = 'Оплату не завершено. Замовлення збережено — натисніть «Перейти до оплати», коли будете готові.';
+        status.className = 'order__status';
       } else {
+        submit.hidden = false;
         status.textContent = 'Оплата не пройшла. Кошик збережено — спробуйте іншу картку або зателефонуйте нам.';
         status.className = 'order__status is-err';
         console.warn('[pay]', res);
       }
       status.scrollIntoView({ ...scrollOpts, block: 'center' });
     };
-
-    const back = $('[data-pay-embed-back]');
-    if (back) back.addEventListener('click', () => {
-      closeLiqpayEmbed();
-      submit.hidden = false;
-      status.textContent = 'Оплату не завершено. Замовлення збережено — натисніть «Перейти до оплати», коли будете готові.';
-      status.className = 'order__status';
-      submit.scrollIntoView({ ...scrollOpts, block: 'center' });
-    });
 
     // Телефон: м'яке форматування після введення
     const phoneInput = $('input[name="phone"]', form);
@@ -2068,19 +2070,19 @@
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || `Сервер відповів ${res.status}`);
 
-        if (json.liqpay) {
+        if (json.wayforpay) {
           try {
-            await openLiqpayEmbed(json.liqpay, payDone);
+            await openWayforpay(json.wayforpay, payDone);
             submit.hidden = true;
-            status.textContent = `Замовлення №${json.orderId} створено. Введіть дані картки у вікні нижче.`;
+            status.textContent = `Замовлення №${json.orderId} створено. Введіть дані картки у вікні оплати.`;
             status.classList.add('is-ok');
           } catch (err) {
             // Віджет не піднявся — не лишаємо покупця без оплати,
-            // а веземо його на сторінку LiqPay, як було раніше.
-            console.warn('[pay] вікно оплати недоступне, переходимо на сторінку LiqPay', err);
-            status.textContent = 'Переходимо на захищену сторінку LiqPay…';
+            // а веземо його на сторінку WayForPay.
+            console.warn('[pay] вікно оплати недоступне, переходимо на сторінку WayForPay', err);
+            status.textContent = 'Переходимо на захищену сторінку WayForPay…';
             status.classList.add('is-ok');
-            goLiqpay(json.liqpay);
+            goWayforpay(json.wayforpay);
           }
           return;
         }
@@ -2105,7 +2107,7 @@
   };
 
   /* ==========================================================
-     Повернення з LiqPay
+     Повернення з WayForPay
      ========================================================== */
   const initReturn = () => {
     const p = new URLSearchParams(location.search);
@@ -2115,8 +2117,8 @@
     const status = $('[data-order-status]');
     if (!status) return;
 
-    // LiqPay повертає сюди незалежно від результату, тому не стверджуємо,
-    // що гроші пройшли — підтвердження приходить нам на server_url.
+    // WayForPay повертає сюди незалежно від результату, тому не стверджуємо,
+    // що гроші пройшли — підтвердження приходить нам на serviceUrl.
     if (paid === 'done') {
       cart = {};
       saveCart();

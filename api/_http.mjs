@@ -36,7 +36,8 @@ export const sendText = (res, text, status = 200) => {
    готовий об'єкт, для form-urlencoded — теж об'єкт. Але покладатися
    на це не можна, бо поведінка залежить від заголовків запиту, тож
    коли req.body порожній — читаємо потік самі. Розбирати результат
-   лишається викликачу: JSON і форма LiqPay потребують різного. */
+   лишається викликачу: JSON форми й callback WayForPay потребують
+   різного розбору. */
 export async function readBody(req) {
   if (req.body !== undefined && req.body !== null && req.body !== '') return req.body;
 

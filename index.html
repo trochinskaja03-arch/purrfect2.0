@@ -544,12 +544,12 @@
         <h3 class="order__ttl" id="ttl-pay">Оплата</h3>
 
         <!-- Єдиний спосіб оплати, тож це не вибір, а пояснення -->
-        <input type="hidden" name="payment" value="liqpay">
+        <input type="hidden" name="payment" value="wayforpay">
 
         <div class="pay">
-          <p class="pay__ttl">Карткою онлайн <em class="tag">LiqPay</em></p>
+          <p class="pay__ttl">Карткою онлайн <em class="tag">WayForPay</em></p>
           <p class="pay__note">
-            Вікно оплати відкриється просто тут, під кнопкою: номер картки,
+            Вікно оплати відкриється поверх сторінки: номер картки,
             термін дії та CVV вводяться вручну, з клавіатури.
           </p>
           <p class="pay__note">
@@ -586,25 +586,14 @@
 
         <p class="order__status" data-order-status role="status" aria-live="polite"></p>
 
-        <!-- Вікно оплати LiqPay розкривається тут, після створення замовлення:
-             покупець вводить картку вручну, не виходячи зі сторінки. Самі поля
-             картки живуть в iframe LiqPay — на наш сайт і на наш сервер вони не
+        <!-- Віджет WayForPay відкриває власне вікно поверх сторінки, тож
+             місця під нього в розмітці не потрібно. Поля картки живуть
+             в iframe WayForPay — на наш сайт і на наш сервер вони не
              потрапляють (інакше знадобилася б сертифікація PCI DSS). -->
-        <div class="pay-embed" data-pay-embed hidden>
-          <p class="pay-embed__ttl">Дані картки</p>
-          <div class="pay-embed__box" id="liqpay-embed" data-liqpay-embed></div>
-          <p class="pay-embed__note">
-            Номер картки, термін дії та CVV вводяться у захищеному вікні LiqPay.
-            Ми цих даних не бачимо й не зберігаємо.
-          </p>
-          <button class="btn btn--ghost btn--sm pay-embed__back" type="button" data-pay-embed-back>
-            <span>Повернутися до даних замовлення</span>
-          </button>
-        </div>
 
         <p class="order__fine">
-          Натискаючи кнопку, ви підтверджуєте замовлення. Одразу під нею
-          відкриється захищене вікно LiqPay, у якому дані картки вводяться
+          Натискаючи кнопку, ви підтверджуєте замовлення. Одразу
+          відкриється захищене вікно WayForPay, у якому дані картки вводяться
           вручну — ми їх не бачимо й не зберігаємо. Вартість доставки
           сплачується окремо за тарифами перевізника.
         </p>

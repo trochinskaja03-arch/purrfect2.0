@@ -3,20 +3,21 @@
    Що робить:
    1. перевіряє дані й ПЕРЕРАХОВУЄ суму на сервері (клієнту не довіряємо);
    2. надсилає замовлення в Telegram;
-   3. для оплати карткою — готує підписаний пакет для LiqPay.
+   3. для оплати карткою — готує підписаний пакет для WayForPay.
 
    Змінні середовища:
-     TELEGRAM_BOT_TOKEN   — обовʼязково для сповіщень
-     TELEGRAM_CHAT_ID     — обовʼязково для сповіщень
-     LIQPAY_PUBLIC_KEY    — обовʼязково для оплати карткою
-     LIQPAY_PRIVATE_KEY   — обовʼязково для оплати карткою
-     LIQPAY_SANDBOX       — "1" для тестового режиму (гроші не списуються)
-     SITE_URL             — напр. https://purrfect.com.ua (для result_url/server_url)
+     TELEGRAM_BOT_TOKEN           — обовʼязково для сповіщень
+     TELEGRAM_CHAT_ID             — обовʼязково для сповіщень
+     WAYFORPAY_MERCHANT_ACCOUNT   — обовʼязково для оплати карткою
+     WAYFORPAY_SECRET_KEY         — обовʼязково для оплати карткою
+     SITE_URL                     — напр. https://purrfect.com.ua
+                                    (з нього беремо домен і адреси повернення)
 */
 
 import crypto from 'node:crypto';
 import { priceOrder } from './_catalog.mjs';
 import { sendJson, readJson } from './_http.mjs';
+import { wayforpayPacket } from './_wayforpay.mjs';
 
 const SHIPPING_LABELS = {
   'np-warehouse': 'Нова Пошта — відділення / поштомат',
@@ -69,44 +70,6 @@ async function notifyTelegram(text) {
     console.error('[order] Telegram:', err);
     return false;
   }
-}
-
-/* ---------- LiqPay ---------- */
-function liqpayPacket({ orderId, amount, description, siteUrl }) {
-  const publicKey = process.env.LIQPAY_PUBLIC_KEY;
-  const privateKey = process.env.LIQPAY_PRIVATE_KEY;
-  if (!publicKey || !privateKey) throw new Error('LiqPay не налаштовано');
-
-  const params = {
-    version: 3,
-    public_key: publicKey,
-    action: 'pay',
-    amount: Number(amount.toFixed(2)),
-    currency: 'UAH',
-    description,
-    order_id: orderId,
-    language: 'uk',
-    // Порядок важливий: перша в списку вкладка відкривається одразу.
-    // Ручне введення картки має бути першим — Apple Pay і Google Pay
-    // доступні не всім (потрібні Face ID / Touch ID і відповідний пристрій),
-    // тож вони лишаються запасним, а не основним способом.
-    paytypes: 'card,privat24,apay,gpay',
-    // LiqPay повертає сюди і після успіху, і після відмови —
-    // справжній статус приходить окремо на server_url нижче.
-    // Блок оформлення живе в стрічці лендингу, тож повертаємо покупця туди:
-    // там і форма, і місце під повідомлення про статус оплати.
-    result_url: `${siteUrl}/?payment=done#zamovlennya`,
-    server_url: `${siteUrl}/api/liqpay-callback`
-  };
-  if (process.env.LIQPAY_SANDBOX === '1') params.sandbox = '1';
-
-  const data = Buffer.from(JSON.stringify(params)).toString('base64');
-  const signature = crypto
-    .createHash('sha1')
-    .update(privateKey + data + privateKey, 'binary')
-    .digest('base64');
-
-  return { data, signature, checkoutUrl: 'https://www.liqpay.ua/api/3/checkout' };
 }
 
 /* ---------- Обробник ---------- */
@@ -166,7 +129,7 @@ export default async function handler(req, res) {
   }
 
   /* --- оплата --- */
-  // єдиний спосіб оплати — картка через LiqPay
+  // єдиний спосіб оплати — картка через WayForPay
   const orderId = makeOrderId();
   const comment = clean(body?.comment, 500);
 
@@ -189,7 +152,7 @@ export default async function handler(req, res) {
     '',
     `📦 ${deliveryLines.map(tgEscape).join('\n     ')}`,
     '',
-    '💳 Картка (LiqPay) — <i>очікує оплати</i>',
+    '💳 Картка (WayForPay) — <i>очікує оплати</i>',
     comment ? `\n💬 ${tgEscape(comment)}` : null
   ].filter(Boolean).join('\n');
 
@@ -197,19 +160,20 @@ export default async function handler(req, res) {
 
   /* --- оплата карткою: єдиний спосіб --- */
   if (!siteUrl) {
-    console.error('[order] SITE_URL не задано — LiqPay не зможе повернути покупця');
+    console.error('[order] SITE_URL не задано — WayForPay не зможе повернути покупця');
     return json({ ok: false, error: 'Оплата тимчасово недоступна' }, 503);
   }
   try {
-    const liqpay = liqpayPacket({
+    const wayforpay = wayforpayPacket({
       orderId,
       amount: priced.total,
       description: `Purrfect — замовлення ${orderId}, ${priced.qty} фл.`,
-      siteUrl
+      siteUrl,
+      customer: { name, phone }
     });
-    return json({ ok: true, orderId, liqpay });
+    return json({ ok: true, orderId, wayforpay });
   } catch (err) {
-    console.error('[order] LiqPay:', err);
+    console.error('[order] WayForPay:', err);
     return json({ ok: false, error: 'Оплата тимчасово недоступна' }, 503);
   }
 }

@@ -2102,44 +2102,10 @@ html[lang="ru"] { --hero-title-scale: .86; }
 .field.is-warn input { border-color: rgba(200, 162, 74, .55); }
 .field.is-warn .field__hint { color: var(--gold-soft); }
 
-/* ---------- Вбудоване вікно оплати LiqPay ---------- */
-/* Поля картки — це iframe LiqPay усередині сторінки, тож стилізуємо
-   лише рамку навколо нього: саме вікно світле й малюється LiqPay. */
-.pay-embed {
-  margin-top: var(--space-5);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--hairline-2);
-}
-.pay-embed[hidden] { display: none; }
-.pay-embed__ttl {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .24em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: var(--space-3);
-}
-.pay-embed__box {
-  /* заглушка на ті секунди, поки вікно LiqPay ще вантажиться;
-     далі висоту задає сам віджет */
-  min-height: 240px;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #fff;
-}
-.pay-embed__box iframe {
-  display: block;
-  width: 100%;
-  border: 0;
-}
-.pay-embed__note {
-  margin-top: var(--space-3);
-  font-size: 11.5px;
-  font-weight: 300;
-  line-height: 1.65;
-  color: var(--text-3);
-}
-.pay-embed__back { margin-top: var(--space-3); }
+/* Стилів для вікна оплати тут немає навмисно: віджет WayForPay
+   малює власне вікно поверх сторінки й оформлює його сам. Раніше на
+   цьому місці був блок .pay-embed — рамка навколо вбудованого iframe
+   LiqPay; після переходу на WayForPay він став непотрібним. */
 
 .order__fine {
   margin-top: var(--space-4);
